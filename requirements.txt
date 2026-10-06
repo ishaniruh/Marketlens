@@ -1,0 +1,45 @@
+# MarketLens — Financial Market Intelligence & Portfolio Analytics Platform
+# Core Requirements
+
+# Data ingestion & processing
+yfinance==0.2.36
+pandas==2.1.4
+numpy==1.26.3
+
+# Database
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.25
+
+# Web framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+httpx==0.26.0
+
+# ML & forecasting
+scikit-learn==1.4.0
+statsmodels==0.14.1
+
+# Visualization (backend charts / notebooks)
+matplotlib==3.8.2
+seaborn==0.13.2
+plotly==5.18.0
+
+# Gemini AI
+google-generativeai==0.3.2
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+loguru==0.7.2
+tqdm==4.66.1
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# Jupyter
+jupyter==1.0.0
+ipykernel==6.29.0

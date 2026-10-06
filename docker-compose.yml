@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: marketlens_postgres
+    environment:
+      POSTGRES_DB: marketlens
+      POSTGRES_USER: marketlens_user
+      POSTGRES_PASSWORD: marketlens_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - marketlens_pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketlens_user -d marketlens"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: marketlens_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: marketlens
+      DB_USER: marketlens_user
+      DB_PASSWORD: marketlens_pass
+      APP_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+volumes:
+  marketlens_pgdata:

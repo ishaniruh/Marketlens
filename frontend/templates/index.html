@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarketLens — Financial Market Intelligence & Portfolio Analytics</title>
+  <meta name="description" content="MarketLens: A professional financial market intelligence platform for portfolio analytics, risk analysis, and market trend insights across 18 major assets." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js" defer></script>
+</head>
+<body>
+  <!-- ══ Navigation ══════════════════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">◈</span>
+      <span class="brand-name">Market<span class="brand-accent">Lens</span></span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-overview"   onclick="switchTab('overview')">Market Overview</button>
+      <button class="nav-tab"        id="tab-asset"      onclick="switchTab('asset')">Asset Analysis</button>
+      <button class="nav-tab"        id="tab-portfolio"  onclick="switchTab('portfolio')">Portfolio</button>
+      <button class="nav-tab"        id="tab-forecast"   onclick="switchTab('forecast')">Forecasting</button>
+      <button class="nav-tab"        id="tab-regime"     onclick="switchTab('regime')">Market Regime</button>
+    </div>
+    <div class="nav-meta">
+      <span class="nav-badge">Historical Analysis</span>
+      <span class="nav-badge nav-badge--ai" id="ai-badge" onclick="toggleAIPanel()">◎ AI Insights</span>
+    </div>
+  </nav>
+
+  <!-- ══ Main ════════════════════════════════════════════════════════════ -->
+  <main class="main" id="main">
+
+    <!-- ── Loading state ──────────────────────────────────────────────── -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading MarketLens…</p>
+    </div>
+
+    <!-- ══════════════ PAGE: MARKET OVERVIEW ══════════════════════════ -->
+    <section class="page active" id="page-overview">
+      <div class="page-header">
+        <h1>Market Overview</h1>
+        <p class="page-subtitle">Historical performance across 18 major assets · 5+ years of data</p>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpi-overview"></div>
+
+      <div class="content-grid-2">
+        <!-- Top/Worst performers -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Top Performers</h2>
+            <span class="card-badge">Annualised Return</span>
+          </div>
+          <div class="performers-list" id="top-performers"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Worst Performers</h2>
+            <span class="card-badge card-badge--warn">Max Drawdown Risk</span>
+          </div>
+          <div class="performers-list" id="worst-performers"></div>
+        </div>
+      </div>
+
+      <!-- Sector chart + All assets table -->
+      <div class="content-grid-2">
+        <div class="card">
+          <div class="card-header"><h2>Sector Performance</h2></div>
+          <canvas id="chart-sector" height="260"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Volatility vs Return</h2></div>
+          <canvas id="chart-scatter" height="260"></canvas>
+        </div>
+      </div>
+
+      <!-- Full asset table -->
+      <div class="card">
+        <div class="card-header">
+          <h2>All Assets — Performance Summary</h2>
+          <input class="search-input" type="text" id="asset-search" placeholder="Search ticker or company…" oninput="filterTable()" />
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="asset-table">
+            <thead>
+              <tr>
+                <th>Ticker</th><th>Company</th><th>Sector</th>
+                <th>Ann. Return</th><th>Volatility</th><th>Sharpe</th>
+                <th>Max Drawdown</th><th>Avg Volume</th>
+              </tr>
+            </thead>
+            <tbody id="asset-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PAGE: ASSET ANALYSIS ════════════════════════════ -->
+    <section class="page" id="page-asset">
+      <div class="page-header">
+        <h1>Asset Analysis</h1>
+        <div class="asset-selector">
+          <select id="asset-ticker-select" onchange="loadAssetData()">
+            <option value="">— Select Asset —</option>
+          </select>
+          <select id="asset-days-select" onchange="loadAssetData()">
+            <option value="252">1 Year</option>
+            <option value="504" selected>2 Years</option>
+            <option value="756">3 Years</option>
+            <option value="1260">5 Years</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="kpi-asset"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 id="asset-chart-title">Price & Moving Averages</h2>
+          <div class="chart-legend" id="ma-legend"></div>
+        </div>
+        <canvas id="chart-price" height="280"></canvas>
+      </div>
+
+      <div class="content-grid-2">
+        <div class="card">
+          <div class="card-header"><h2>Daily Returns Distribution</h2></div>
+          <canvas id="chart-returns-hist" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Rolling Volatility (20-day Ann.)</h2></div>
+          <canvas id="chart-volatility" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Drawdown Profile</h2></div>
+        <canvas id="chart-drawdown" height="180"></canvas>
+      </div>
+
+      <!-- Monthly return heatmap -->
+      <div class="card">
+        <div class="card-header"><h2>Monthly Returns Calendar</h2></div>
+        <div class="heatmap-wrapper" id="monthly-heatmap"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PAGE: PORTFOLIO ═════════════════════════════════ -->
+    <section class="page" id="page-portfolio">
+      <div class="page-header">
+        <h1>Portfolio Builder</h1>
+        <p class="page-subtitle disclaimer">⚠ Historical analysis only · Not financial advice</p>
+      </div>
+
+      <div class="content-grid-2">
+        <!-- Builder panel -->
+        <div class="card card--form">
+          <div class="card-header"><h2>Build Your Portfolio</h2></div>
+          <div class="portfolio-builder" id="portfolio-builder">
+            <div class="weight-row" id="weight-rows">
+              <!-- Dynamically populated -->
+            </div>
+            <button class="btn btn--ghost" onclick="addWeightRow()" id="add-asset-btn">+ Add Asset</button>
+            <div class="weight-total-bar">
+              <span>Total Weight:</span>
+              <span id="weight-total" class="weight-total-value">0.00%</span>
+            </div>
+            <input class="form-input" type="text" id="portfolio-name" placeholder="Portfolio name…" value="My Portfolio" />
+            <button class="btn btn--primary" id="analyse-btn" onclick="analysePortfolio()">Analyse Portfolio</button>
+          </div>
+        </div>
+
+        <!-- Results panel -->
+        <div class="card" id="portfolio-results-card" style="display:none">
+          <div class="card-header"><h2>Portfolio Metrics</h2></div>
+          <div class="kpi-grid kpi-grid--2col" id="kpi-portfolio"></div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="content-grid-3" id="portfolio-charts" style="display:none">
+        <div class="card">
+          <div class="card-header"><h2>Sector Allocation</h2></div>
+          <canvas id="chart-sector-alloc" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Risk Contribution</h2></div>
+          <canvas id="chart-risk-contrib" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Return Contribution</h2></div>
+          <canvas id="chart-return-contrib" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="portfolio-equity-card" style="display:none">
+        <div class="card-header"><h2>Portfolio Equity Curve</h2></div>
+        <canvas id="chart-equity" height="220"></canvas>
+      </div>
+    </section>
+
+    <!-- ══════════════ PAGE: FORECASTING ═══════════════════════════════ -->
+    <section class="page" id="page-forecast">
+      <div class="page-header">
+        <h1>Price Trend Forecasting</h1>
+        <p class="page-subtitle disclaimer">⚠ Illustrative trend estimates · Not investment recommendations</p>
+      </div>
+
+      <div class="forecast-controls">
+        <select id="forecast-ticker" class="select-lg">
+          <option value="">— Select Asset —</option>
+        </select>
+        <select id="forecast-horizon" class="select-lg">
+          <option value="15">15 Trading Days</option>
+          <option value="30" selected>30 Trading Days</option>
+          <option value="60">60 Trading Days</option>
+          <option value="90">90 Trading Days</option>
+        </select>
+        <button class="btn btn--primary" onclick="loadForecast()">Generate Forecast</button>
+      </div>
+
+      <div class="card" id="forecast-card">
+        <div class="card-header">
+          <h2 id="forecast-title">Forecast</h2>
+          <div class="model-badge">Holt-Winters ETS</div>
+        </div>
+        <canvas id="chart-forecast" height="300"></canvas>
+        <div class="forecast-meta" id="forecast-meta"></div>
+        <div class="disclaimer-box" id="forecast-disclaimer"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PAGE: MARKET REGIME ═════════════════════════════ -->
+    <section class="page" id="page-regime">
+      <div class="page-header">
+        <h1>Market Regime Analysis</h1>
+        <p class="page-subtitle">Random Forest regime classification · Low / Medium / High Volatility</p>
+      </div>
+
+      <div class="regime-controls">
+        <select id="regime-ticker" class="select-lg">
+          <option value="">All Assets</option>
+        </select>
+        <button class="btn btn--primary" onclick="loadRegime()">Load Regime Data</button>
+        <button class="btn btn--secondary" onclick="trainModel()">Train / Retrain Model</button>
+      </div>
+
+      <div class="kpi-grid" id="kpi-regime"></div>
+
+      <div class="content-grid-2">
+        <div class="card">
+          <div class="card-header"><h2>Regime Distribution</h2></div>
+          <canvas id="chart-regime-dist" height="240"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Regime Over Time</h2></div>
+          <canvas id="chart-regime-time" height="240"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Methodology</h2></div>
+        <div class="methodology-box" id="regime-methodology">
+          <p>Load regime data to see model methodology details.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══ AI Insights Sidebar ═══════════════════════════════════════════ -->
+  <aside class="ai-panel" id="ai-panel">
+    <div class="ai-panel-header">
+      <span>◎ AI Business Insights</span>
+      <button onclick="toggleAIPanel()" class="close-btn">✕</button>
+    </div>
+    <div class="ai-panel-body">
+      <p class="ai-panel-desc">Enter context below and MarketLens will generate analytical commentary using Gemini AI.</p>
+      <textarea id="ai-context" class="ai-textarea" placeholder="e.g., 'Technology sector: ann. return 18.2%, volatility 28.4%, Sharpe 0.93. Healthcare sector: ann. return 9.1%, volatility 17.3%, Sharpe 0.88…'"></textarea>
+      <button class="btn btn--ai" onclick="generateInsights()">Generate Insights</button>
+      <div class="ai-output" id="ai-output"></div>
+    </div>
+  </aside>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
